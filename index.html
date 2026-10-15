@@ -270,14 +270,14 @@ function startGame(){
   <div id="feed"></div>`;
   document.getElementById("quit").onclick=()=>{stopGame(); print(`<span class="d">fraud-hunt: quit</span>`);};
   const DUR=40000; endAt=performance.now()+DUR;
-  spawn(); timers.push(setInterval(spawn, 1100));
+  spawn(); timers.push(setInterval(spawn, 11000));
   timers.push(setInterval(()=>{ const left=Math.max(0,endAt-performance.now()); document.getElementById("bar").style.width=(left/DUR*100)+"%"; if(left<=0) finish(); },100));
 }
 function spawn(){
   if(performance.now()>endAt-2500) return;
   const feed=document.getElementById("feed"); if(!feed) return;
   if(txs.filter(x=>!x.done).length>=6) return;
-  const t=makeTx(); t.id=++seq; t.life=4600; t.born=performance.now();
+  const t=makeTx(); t.id=++seq; t.life=15000; t.born=performance.now();
   const el=document.createElement("div"); el.className="tx"; el.tabIndex=0; el.setAttribute("role","button");
   const tags=[ `${String(t.hour).padStart(2,"0")}:${String(Math.floor(rnd(0,60))).padStart(2,"0")}`, t.country, t.device, t.cp ];
   if(t.attempts>1) tags.push(`${t.attempts} attempts / 2 min`);
