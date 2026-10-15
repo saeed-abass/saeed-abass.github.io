@@ -1,0 +1,336 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Saeed Mohammed Abass · Terminal</title>
+<meta name="description" content="Interactive terminal portfolio of Saeed Mohammed Abass: software engineer, MSc Applied Computer Science and AI. Includes Fraud Hunt, a mini game based on a real fraud detection project.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0b0f14; --panel:#0f141b; --bar:#151b23; --line:#263040; --fg:#e6edf3; --dim:#8b949e;
+  --green:#7ee787; --blue:#79c0ff; --amber:#f2cc60; --red:#ff7b72; --violet:#d2a8ff;
+  --chip:#1a2230; --chipfg:#c9d1d9;
+}
+:root[data-theme="light"]{
+  --bg:#f3f5f8; --panel:#ffffff; --bar:#f6f8fa; --line:#d0d7de; --fg:#1f2328; --dim:#59636e;
+  --green:#1a7f37; --blue:#0969da; --amber:#9a6700; --red:#cf222e; --violet:#8250df;
+  --chip:#eef1f5; --chipfg:#24292f;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.6 'JetBrains Mono',ui-monospace,Menlo,Consolas,monospace;
+  display:flex;justify-content:center;padding:24px 16px}
+.win{width:100%;max-width:920px;background:var(--panel);border:1px solid var(--line);border-radius:12px;
+  display:flex;flex-direction:column;min-height:calc(100vh - 48px);overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.25)}
+.bar{display:flex;align-items:center;gap:8px;padding:10px 14px;background:var(--bar);border-bottom:1px solid var(--line)}
+.dot{width:12px;height:12px;border-radius:50%}
+.bar .t{flex:1;text-align:center;color:var(--dim);font-size:13px}
+.bar button{background:none;border:1px solid var(--line);color:var(--dim);border-radius:6px;font:inherit;font-size:12px;padding:2px 8px;cursor:pointer}
+#out{flex:1;overflow-y:auto;padding:18px 20px 8px;word-wrap:break-word}
+.row{white-space:pre-wrap;margin:0}
+.p{color:var(--green);font-weight:700}.c{color:var(--fg)}.d{color:var(--dim)}.b{color:var(--blue)}.a{color:var(--amber)}
+.r{color:var(--red)}.v{color:var(--violet)}.g{color:var(--green)}.h{font-weight:700}
+a{color:var(--blue)}
+.inrow{display:flex;gap:10px;padding:6px 20px 14px;align-items:center}
+#cmd{flex:1;background:transparent;border:0;outline:0;color:var(--fg);font:inherit;caret-color:var(--green)}
+.chips{display:flex;flex-wrap:wrap;gap:8px;padding:10px 20px 16px;border-top:1px solid var(--line)}
+.chips button{background:var(--chip);color:var(--chipfg);border:1px solid var(--line);border-radius:999px;font:inherit;font-size:13px;padding:4px 12px;cursor:pointer}
+.chips button:hover,.chips button:focus-visible{border-color:var(--blue);outline:none}
+.chips .play{border-color:var(--amber);color:var(--amber);font-weight:600}
+.proj{display:block;margin:2px 0}
+/* game */
+#game{display:none;flex-direction:column;flex:1;padding:16px 20px;gap:12px}
+#game.on{display:flex}
+.hud{display:flex;gap:18px;flex-wrap:wrap;align-items:center}
+.hud .k{color:var(--dim)} .hud .val{font-weight:700}
+.timer{flex:1;min-width:120px;height:6px;background:var(--chip);border-radius:4px;overflow:hidden}
+.timer i{display:block;height:100%;background:var(--amber);width:100%;transition:width .1s linear}
+#feed{display:flex;flex-direction:column;gap:8px;flex:1}
+.tx{display:grid;grid-template-columns:28px 1fr auto;gap:12px;align-items:center;border:1px solid var(--line);
+  border-radius:10px;padding:10px 12px;background:var(--bar);position:relative;overflow:hidden;cursor:pointer;
+  animation:slide .25s ease-out}
+.tx:hover{border-color:var(--blue)}
+.tx .n{color:var(--dim);font-weight:700;text-align:center}
+.tx .main{display:flex;flex-direction:column}
+.tx .top{font-weight:600}
+.tx .tags{display:flex;gap:6px;flex-wrap:wrap;font-size:12px;margin-top:3px}
+.tag{padding:0 7px;border-radius:999px;background:var(--chip);color:var(--dim)}
+.tx .amt{font-weight:700;font-size:16px}
+.tx .life{position:absolute;left:0;bottom:0;height:3px;background:var(--blue)}
+.tx.flagged{border-color:var(--red)} .tx.flagged .amt::after{content:"  FLAGGED";color:var(--red);font-size:12px}
+.tx.gone{opacity:0;transform:translateX(30px);transition:all .25s}
+@keyframes slide{from{opacity:0;transform:translateY(-8px)}to{opacity:1}}
+.help{color:var(--dim);font-size:13px}
+.result{border:1px solid var(--line);border-radius:10px;padding:14px 16px;background:var(--bar)}
+.cm{display:inline-grid;grid-template-columns:auto auto auto;gap:4px 14px;margin:8px 0}
+.btnrow{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
+.btn{background:var(--chip);border:1px solid var(--line);color:var(--fg);border-radius:8px;font:inherit;font-size:13px;padding:6px 12px;cursor:pointer}
+.btn.primary{border-color:var(--amber);color:var(--amber);font-weight:700}
+@media (max-width:600px){body{padding:0}.win{border-radius:0;min-height:100vh}#out,.inrow,.chips,#game{padding-left:14px;padding-right:14px}body{font-size:14px}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<main class="win" aria-label="Interactive terminal">
+  <div class="bar">
+    <span class="dot" style="background:#ff5f57"></span><span class="dot" style="background:#febc2e"></span><span class="dot" style="background:#28c840"></span>
+    <span class="t">saeed@bradford: ~</span>
+    <button id="themeBtn" type="button" aria-label="Toggle light and dark theme">theme</button>
+  </div>
+
+  <div id="term" style="display:flex;flex-direction:column;flex:1;min-height:0">
+    <div id="out" role="log" aria-live="polite"></div>
+    <div class="inrow"><span class="p">$</span><input id="cmd" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="Type a command" placeholder="type 'help' or tap a command below"></div>
+  </div>
+
+  <section id="game" aria-label="Fraud Hunt game"></section>
+
+  <nav class="chips" id="chips" aria-label="Quick commands">
+    <button data-c="whoami">whoami</button><button data-c="projects">projects</button><button data-c="experience">experience</button>
+    <button data-c="education">education</button><button data-c="skills">skills</button><button data-c="contact">contact</button>
+    <button data-c="play" class="play">▶ play fraud-hunt</button>
+  </nav>
+</main>
+
+<script>
+const GH = "https://github.com/saeed-abass/";
+const PROJECTS = [
+  {id:"artefact-detection", repo:"archaeological-artefact-detection", title:"Archaeological artefact detection (MSc dissertation)",
+   what:"Two-stage pipeline: YOLOv8 detects excavated artefacts, then a CNN classifies their material.",
+   stats:"6 YOLO detectors benchmarked, best mAP@50 0.667 (YOLOv8s) · 5 classifiers, best 86.4% accuracy (SqueezeNet)",
+   stack:"PyTorch · Ultralytics YOLO · scikit-learn"},
+  {id:"road-risk-scoring", repo:"uk-road-collision-risk-scoring", title:"UK road collision risk scoring",
+   what:"Predicts road-segment collision risk from five years of STATS19 data, scaled from Greater Manchester to Great Britain.",
+   stats:"43,903 grid cells · R² 0.351 → 0.410 after national scale-up",
+   stack:"LightGBM · GeoPandas · OSMnx"},
+  {id:"fraud-detection-mlflow", repo:"credit-card-fraud-detection-mlflow", title:"Credit card fraud detection with MLflow",
+   what:"Imbalanced classification (0.17% fraud) comparing SMOTE, ADASYN and class weights, tracked and registered in MLflow.",
+   stats:"Best model XGBoost: test precision 0.906, recall 0.786, PR-AUC 0.846",
+   stack:"XGBoost · imbalanced-learn · MLflow"},
+  {id:"plant-disease", repo:"plant-leaf-disease-detection", title:"Plant leaf disease detection",
+   what:"38-class classifier on PlantVillage: CNN from scratch vs EfficientNetB0 transfer learning.",
+   stats:"98.1% test accuracy (EfficientNetB0) vs 96.4% (CNN)",
+   stack:"TensorFlow · Keras · EfficientNet"},
+  {id:"microneedle-qc", repo:"microneedle-quality-classification", title:"Microneedle quality classification",
+   what:"Defect detection for microneedle patch manufacturing, comparing ResNet50, EfficientNetB0 and VGG16.",
+   stats:"82.5% accuracy, 100% defect precision (EfficientNetB0)",
+   stack:"PyTorch · torchvision"},
+  {id:"keratoconus-ai", repo:"keratoconus-detection-transfer-learning", title:"Keratoconus detection",
+   what:"Classifies corneal topography maps as Keratoconus, Suspect or Normal, with Grad-CAM explanations.",
+   stats:"Keratoconus class AUC 0.887 on an independent test set",
+   stack:"TensorFlow · EfficientNetB4 · Grad-CAM"},
+  {id:"wy-crime-app", repo:"wy-crime-android-app", title:"WY Crime Explorer (Android)",
+   what:"Android app for West Yorkshire crime data: map, live search, admin CRUD, PBKDF2-hashed logins, offline Room DB.",
+   stats:"Java · min API 26",
+   stack:"Java · Room · Google Maps SDK"},
+];
+
+const out = document.getElementById("out"), cmd = document.getElementById("cmd");
+const esc = s => s.replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+function print(html, cls=""){ const d=document.createElement("div"); d.className="row "+cls; d.innerHTML=html; out.appendChild(d); out.scrollTop=out.scrollHeight; }
+function echo(c){ print(`<span class="p">$</span> <span class="c">${esc(c)}</span>`); }
+
+const CMDS = {
+  help(){ print(
+`<span class="h">Commands</span>
+  <span class="b">whoami</span>        who I am
+  <span class="b">projects</span>      list projects   <span class="d">(also: ls)</span>
+  <span class="b">open &lt;n&gt;</span>      details for project n, e.g. <span class="b">open 1</span>
+  <span class="b">experience</span>    work history
+  <span class="b">education</span>     degrees
+  <span class="b">skills</span>        tech stack
+  <span class="b">contact</span>       how to reach me
+  <span class="a">play</span>          Fraud Hunt: can you beat my model?
+  <span class="b">theme</span>  <span class="b">clear</span>  <span class="b">github</span>
+<span class="d">Tip: Tab completes, ↑ ↓ recall history.</span>`); },
+  whoami(){ print(
+`<span class="h">Saeed Mohammed Abass</span>
+Software engineer with an MSc in Applied Computer Science and AI (University of Bradford) and a background in full-stack web development. I build machine learning, computer vision and data projects in Python. Based in Bradford, UK.
+
+<span class="g">&gt;&gt; open to ML/AI, data and software engineering roles in the UK</span>`); },
+  projects(){
+    print(`<span class="h">projects/</span> <span class="d">(type open &lt;n&gt; for details)</span>`);
+    PROJECTS.forEach((p,i)=>print(`  <span class="a">${i+1}</span>  <span class="b">${p.id}/</span>  <span class="d">${esc(p.title)}</span>`));
+  },
+  open(arg){
+    const i = parseInt(arg,10)-1; const p = PROJECTS[i] || PROJECTS.find(x=>x.id===arg || x.repo===arg);
+    if(!p){ print(`<span class="r">open: give a project number 1-${PROJECTS.length}, e.g. open 1</span>`); return; }
+    print(
+`<span class="h">${esc(p.title)}</span>
+${esc(p.what)}
+<span class="g">▲ ${esc(p.stats)}</span>
+<span class="d">stack:</span> ${esc(p.stack)}
+<span class="d">code:</span>  <a href="${GH+p.repo}" target="_blank" rel="noopener">${GH.replace("https://","")+p.repo}</a>`); },
+  experience(){ print(
+`<span class="h">Experience</span>
+<span class="b">Software Engineer</span>, Hamaaya · Accra, Ghana            <span class="d">Oct 2023 - Apr 2025</span>
+  PHP (plain and Laravel), JavaScript and Python web applications; REST APIs,
+  CRM and third-party integrations; relational schema design; code review; Git.
+<span class="b">Civilian Defence Staff</span> (National Service, IT), Ghana Armed Forces <span class="d">Sep 2022 - Sep 2023</span>
+  Hardware and network support, user support, fault logging.
+<span class="b">Web Developer Intern</span>, Hamaaya                         <span class="d">Sep 2021 - Dec 2021</span>`); },
+  education(){ print(
+`<span class="h">Education</span>
+<span class="b">MSc Applied Computer Science and AI</span>, University of Bradford   <span class="d">2025 - 2026</span>
+  Dissertation: Deep Learning for Detection and Classification of Excavated Archaeological Artefacts
+<span class="b">BSc Computer Science</span>, KNUST, Ghana                          <span class="d">2018 - 2022</span>`); },
+  skills(){ print(
+`<span class="h">Skills</span>
+<span class="d">languages </span> Python · JavaScript · PHP · SQL · TypeScript · Java
+<span class="d">ml / data </span> PyTorch · TensorFlow · scikit-learn · XGBoost · LightGBM · MLflow · pandas
+<span class="d">vision    </span> YOLO · transfer learning · Grad-CAM
+<span class="d">geo       </span> GeoPandas · OSMnx · Shapely
+<span class="d">eng       </span> REST APIs · relational schema design · Git · CI/CD · Docker basics`); },
+  contact(){ print(
+`<span class="h">Contact</span>
+email     <a href="mailto:saeed.abass1002@gmail.com">saeed.abass1002@gmail.com</a>
+linkedin  <a href="https://www.linkedin.com/in/abass-saeed-mohammed/" target="_blank" rel="noopener">linkedin.com/in/abass-saeed-mohammed</a>
+github    <a href="${GH}" target="_blank" rel="noopener">github.com/saeed-abass</a>`); },
+  github(){ window.open(GH,"_blank","noopener"); print(`<span class="d">opening github.com/saeed-abass ...</span>`); },
+  clear(){ out.innerHTML=""; },
+  theme(){ toggleTheme(); print(`<span class="d">theme: ${document.documentElement.dataset.theme}</span>`); },
+  play(){ startGame(); },
+  sudo(){ print(`<span class="r">nice try. permission denied (but I like your thinking, let's talk: type contact)</span>`); },
+};
+CMDS.ls = CMDS.projects; CMDS.cat = CMDS.open; CMDS.about = CMDS.whoami;
+
+const hist=[]; let hi=0;
+function run(raw){
+  const line = raw.trim(); echo(line); if(!line) return;
+  hist.push(line); hi=hist.length;
+  const [c,...args] = line.split(/\s+/); const f = CMDS[c.toLowerCase()];
+  if(f) f(args.join(" ")); else print(`<span class="r">command not found: ${esc(c)}</span>  <span class="d">type help</span>`);
+}
+cmd.addEventListener("keydown", e=>{
+  if(e.key==="Enter"){ run(cmd.value); cmd.value=""; }
+  else if(e.key==="ArrowUp"){ if(hi>0){hi--; cmd.value=hist[hi];} e.preventDefault(); }
+  else if(e.key==="ArrowDown"){ if(hi<hist.length){hi++; cmd.value=hist[hi]||"";} e.preventDefault(); }
+  else if(e.key==="Tab"){ e.preventDefault(); const m=Object.keys(CMDS).filter(k=>k.startsWith(cmd.value.trim())); if(m.length===1) cmd.value=m[0]+" "; else if(m.length) print(`<span class="d">${m.join("  ")}</span>`); }
+});
+document.getElementById("chips").addEventListener("click", e=>{ const c=e.target.closest("button")?.dataset.c; if(c){ if(gameOn) stopGame(); run(c); cmd.focus({preventScroll:true}); }});
+document.getElementById("term").addEventListener("click", e=>{ if(!e.target.closest("a")) cmd.focus(); });
+
+function toggleTheme(){ const r=document.documentElement; r.dataset.theme = r.dataset.theme==="light"?"dark":"light"; try{localStorage.setItem("theme",r.dataset.theme)}catch(_){} }
+document.getElementById("themeBtn").onclick=toggleTheme;
+(function(){ let t=null; try{t=localStorage.getItem("theme")}catch(_){}; document.documentElement.dataset.theme = t || (matchMedia("(prefers-color-scheme: light)").matches?"light":"dark"); })();
+
+/* ---------------- Fraud Hunt ---------------- */
+const game=document.getElementById("game"), term=document.getElementById("term");
+let gameOn=false, timers=[], txs=[], stats, endAt, seq=0;
+const MERCH_OK=["Tesco","Greggs","Spotify","TfL","Boots","Sainsbury's","Amazon UK","Costa","Uber","Deliveroo","Shell","Morrisons"];
+const MERCH_RISK=["GiftCardHub","CryptoXpress","LuxWatch Online","ElectroDeals","QuickTopUp"];
+const rnd=(a,b)=>a+Math.random()*(b-a), pick=a=>a[Math.floor(Math.random()*a.length)];
+const MODEL = {"weights": [1.63891, 1.621855, 1.650022, 5.027507, 1.631118, 4.449619, 2.449876], "bias": -2.557893, "mean": [3.893514, 0.186222, 0.187, 0.183406, 0.186667, 0.101444, 0.810444], "scale": [1.892569, 0.389286, 0.389912, 0.543266, 0.389644, 0.301916, 0.391949], "threshold": 0.91};
+
+const RISK_SET = new Set(MERCH_RISK);
+function modelProba(t){
+  const x=[Math.log1p(t.amount), t.hour<5?1:0, t.country!=="UK"?1:0, Math.log(t.attempts), t.device==="new device"?1:0, RISK_SET.has(t.merchant)?1:0, t.cp==="online"?1:0];
+  let z=MODEL.bias; x.forEach((v,i)=>{ z+=MODEL.weights[i]*(v-MODEL.mean[i])/MODEL.scale[i]; });
+  return 1/(1+Math.exp(-z));
+}
+
+function makeTx(){
+  const fraud = Math.random()<0.24;
+  const flags=[];
+  // Fraud usually stacks signals, but some fraud shows only one strong signal,
+  // and some genuine customers trip two (travelling, big one-off purchase), so no simple rule is perfect.
+  const x = Math.random();
+  if (fraud) {
+    if (x < .22) flags.push(pick(["velocity","riskmerch"]));
+    else { const nsig = x < .65 ? 2 : 3; const pool=["amount","night","abroad","velocity","newdevice","riskmerch"];
+           while(flags.length<nsig){ const s=pick(pool); if(!flags.includes(s)) flags.push(s); } }
+  } else {
+    const nsig = x < .55 ? 0 : x < .87 ? 1 : 2; const pool=["amount","night","abroad","newdevice"];
+    while(flags.length<nsig){ const s=pick(pool); if(!flags.includes(s)) flags.push(s); }
+  }
+  const t = {fraud, flags};
+  t.amount = flags.includes("amount") ? rnd(640,2400) : Math.exp(rnd(Math.log(3),Math.log(140)));
+  t.hour = flags.includes("night") ? Math.floor(rnd(1,5)) : Math.floor(rnd(7,23));
+  t.country = flags.includes("abroad") ? pick(["NG","RU","BR","VN","US","AE"]) : "UK";
+  t.merchant = flags.includes("riskmerch") ? pick(MERCH_RISK) : pick(MERCH_OK);
+  t.attempts = flags.includes("velocity") ? Math.floor(rnd(4,9)) : 1;
+  t.device = flags.includes("newdevice") ? "new device" : "known device";
+  t.cp = (t.merchant==="TfL"||t.merchant==="Greggs"||t.merchant==="Costa") && !fraud ? "card present" : "online";
+  return t;
+}
+function startGame(){
+  gameOn=true; term.style.display="none"; game.classList.add("on");
+  stats={tp:0,fp:0,fn:0,tn:0}; txs=[]; seq=0;
+  game.innerHTML=`
+  <div class="hud"><span><span class="k">FRAUD HUNT</span></span>
+    <span><span class="k">caught</span> <span class="val g" id="hTP">0</span></span>
+    <span><span class="k">false alarms</span> <span class="val r" id="hFP">0</span></span>
+    <span><span class="k">missed</span> <span class="val a" id="hFN">0</span></span>
+    <div class="timer" aria-hidden="true"><i id="bar"></i></div><button class="btn" id="quit" type="button">quit</button></div>
+  <div class="help">Transactions stream in. <b>Click a transaction</b> (or press its number) to flag it as fraud before it leaves.
+  Signals: big amount, 1-5am, abroad, repeated attempts, new device, risky merchant. One signal alone is often innocent.</div>
+  <div id="feed"></div>`;
+  document.getElementById("quit").onclick=()=>{stopGame(); print(`<span class="d">fraud-hunt: quit</span>`);};
+  const DUR=120000; endAt=performance.now()+DUR;
+  spawn(); timers.push(setInterval(spawn, 7000));
+  timers.push(setInterval(()=>{ const left=Math.max(0,endAt-performance.now()); document.getElementById("bar").style.width=(left/DUR*100)+"%"; if(left<=0) finish(); },100));
+}
+function spawn(){
+  if(performance.now()>endAt-15000) return;  // last transaction still gets its full 15s
+  const feed=document.getElementById("feed"); if(!feed) return;
+  if(txs.filter(x=>!x.done).length>=6) return;
+  const t=makeTx(); t.id=++seq; t.life=15000; t.born=performance.now();
+  const el=document.createElement("div"); el.className="tx"; el.tabIndex=0; el.setAttribute("role","button");
+  const tags=[ `${String(t.hour).padStart(2,"0")}:${String(Math.floor(rnd(0,60))).padStart(2,"0")}`, t.country, t.device, t.cp ];
+  if(t.attempts>1) tags.push(`${t.attempts} attempts / 2 min`);
+  el.innerHTML=`<span class="n"></span><div class="main"><span class="top">${esc(t.merchant)}</span>
+    <div class="tags">${tags.map(x=>`<span class="tag">${esc(x)}</span>`).join("")}</div></div>
+    <span class="amt">£${t.amount.toFixed(2)}</span><span class="life"></span>`;
+  el.setAttribute("aria-label",`${t.merchant}, £${t.amount.toFixed(2)}, ${tags.join(", ")}. Press to flag as fraud.`);
+  el.onclick=()=>flag(t); el.onkeydown=e=>{ if(e.key==="Enter"||e.key===" "){e.preventDefault();flag(t);} };
+  t.el=el; feed.prepend(el); txs.push(t); renumber();
+  const lifeBar=el.querySelector(".life");
+  t.tick=setInterval(()=>{ const p=1-(performance.now()-t.born)/t.life; lifeBar.style.width=Math.max(0,p*100)+"%"; if(p<=0) expire(t); },60);
+}
+function renumber(){ txs.filter(x=>!x.done).forEach((x,i)=>{ x.key=i+1; x.el.querySelector(".n").textContent=i+1; }); }
+function flag(t){ if(t.done) return; t.flagged=true; t.el.classList.add("flagged"); if(t.fraud) stats.tp++; else stats.fp++; retire(t); }
+function expire(t){ if(t.done) return; if(t.fraud) stats.fn++; else stats.tn++; retire(t); }
+function retire(t){ t.done=true; clearInterval(t.tick); hud(); setTimeout(()=>{ t.el.classList.add("gone"); setTimeout(()=>t.el.remove(),260); }, t.flagged?300:0); renumber(); }
+function hud(){ const s=stats; const g=id=>document.getElementById(id); if(!g("hTP")) return; g("hTP").textContent=s.tp; g("hFP").textContent=s.fp; g("hFN").textContent=s.fn; }
+document.addEventListener("keydown", e=>{ if(!gameOn) return; const n=parseInt(e.key,10); if(n>=1&&n<=6){ const t=txs.find(x=>!x.done&&x.key===n); if(t) flag(t);} if(e.key==="Escape") stopGame(); });
+function clearTimers(){ timers.forEach(clearInterval); timers=[]; txs.forEach(t=>clearInterval(t.tick)); }
+function finish(){
+  clearTimers(); txs.filter(t=>!t.done).forEach(expire);
+  const s=stats, p=s.tp/Math.max(1,s.tp+s.fp), r=s.tp/Math.max(1,s.tp+s.fn), f1=(p+r)?2*p*r/(p+r):0;
+  const mc={tp:0,fp:0,fn:0,tn:0};
+  txs.forEach(t=>{ const said=modelProba(t)>=MODEL.threshold; mc[said?(t.fraud?"tp":"fp"):(t.fraud?"fn":"tn")]++; });
+  const mp=mc.tp/Math.max(1,mc.tp+mc.fp), mr=mc.tp/Math.max(1,mc.tp+mc.fn), mf1=(mp+mr)?2*mp*mr/(mp+mr):0;
+  const beat = f1>mf1 ? `<span class="g">You beat my model on these exact ${txs.length} transactions. Nicely done.</span>`
+             : f1===mf1 ? `<span class="a">A draw with my model on these ${txs.length} transactions.</span>`
+             : `<span class="a">My model won this round on the same ${txs.length} transactions. Fancy another go?</span>`;
+  game.innerHTML=`<div class="result" role="status">
+    <div class="h">Round over: here's your confusion matrix</div>
+    <div class="cm"><span></span><span class="d">flagged</span><span class="d">let through</span>
+      <span class="d">fraud</span><span class="g">${s.tp} caught</span><span class="a">${s.fn} missed</span>
+      <span class="d">legit</span><span class="r">${s.fp} false alarms</span><span>${s.tn} correct</span></div>
+    <div>you: precision <b>${p.toFixed(2)}</b> · recall <b>${r.toFixed(2)}</b> · F1 <b>${f1.toFixed(2)}</b></div>
+    <div class="d">my model, same transactions: precision <b>${mp.toFixed(2)}</b> · recall <b>${mr.toFixed(2)}</b> · F1 <b>${mf1.toFixed(2)}</b></div>
+    <p>${beat}</p>
+    <p class="d">Why precision and recall rather than accuracy? Real fraud is about 0.17% of transactions, so a model that never flags anything
+    is 99.8% "accurate" and useless. This game uses ~24% fraud so there's something to catch. The model is a logistic
+    regression trained on 30,000 synthetic transactions from the same generator, so it sees exactly what you see. For real data,
+    see my XGBoost + MLflow project.</p>
+    <div class="btnrow"><button class="btn primary" id="again" type="button">play again</button>
+    <a class="btn" href="${GH}credit-card-fraud-detection-mlflow" target="_blank" rel="noopener">see the real project</a>
+    <button class="btn" id="back" type="button">back to terminal</button></div></div>`;
+  document.getElementById("again").onclick=startGame;
+  document.getElementById("back").onclick=()=>{ stopGame(); print(`<span class="d">fraud-hunt: F1 ${f1.toFixed(2)} (precision ${p.toFixed(2)}, recall ${r.toFixed(2)})</span>`); };
+}
+function stopGame(){ clearTimers(); gameOn=false; game.classList.remove("on"); game.innerHTML=""; term.style.display="flex"; cmd.focus(); }
+
+/* boot */
+print(`<span class="d">Last login: from github.com/saeed-abass</span>`);
+run("whoami");
+print(`\n<span class="d">Type</span> <span class="b">help</span> <span class="d">or tap a command below. Try</span> <span class="a">play</span><span class="d">: can you catch fraud better than my model?</span>`);
+cmd.focus({preventScroll:true});
+</script>
+</body>
+</html>
